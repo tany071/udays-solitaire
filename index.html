@@ -37,7 +37,7 @@ button:focus-visible,.pile:focus-visible{outline:3px solid var(--hi);outline-off
 h1{margin:0;font-size:42px;line-height:1.1;letter-spacing:.01em}
 .tag{margin:6px 0 30px;opacity:.75;font-size:17px;font-style:italic}
 .seg{display:flex;background:rgba(0,0,0,.25);border-radius:12px;padding:3px;margin-bottom:18px}
-.seg button{border:0;background:none;color:#fff;font-size:15px;padding:9px 18px;border-radius:9px;opacity:.7}
+.seg button{border:0;background:none;color:#fff;font-size:15px;padding:9px 14px;border-radius:9px;opacity:.7}
 .seg button.on{background:var(--card);color:var(--ink);opacity:1;font-weight:600}
 .big{width:min(280px,80vw);border:0;border-radius:14px;background:var(--hi);color:var(--ink);font-size:19px;font-weight:700;padding:16px}
 .big.alt{background:rgba(255,255,255,.14);color:#fff;margin-top:10px;font-size:16px;font-weight:600;padding:13px}
@@ -72,6 +72,10 @@ svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-l
 #how div{background:var(--card);color:var(--ink);padding:22px 24px;border-radius:14px;max-width:340px;font:16px/1.45 system-ui,sans-serif}
 #how h2{margin:0 0 8px;font-family:Georgia,serif}#how ol{padding-left:20px;margin:8px 0}#how p{margin:8px 0;opacity:.75;font-size:14px}
 #how button{margin-top:6px;border:0;background:var(--hi);border-radius:10px;padding:12px 20px;font-size:16px;font-weight:600;width:100%}
+#toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:rgba(0,0,0,.82);color:#fff;font:15px/1.3 system-ui,sans-serif;padding:10px 16px;border-radius:12px;z-index:70;display:none;max-width:86vw;text-align:center}
+.card.hint{outline:3px solid #7dffa0;outline-offset:-1px;z-index:60;animation:pulse .7s ease-in-out 4}
+.pile.hintp{box-shadow:0 0 0 3px #7dffa0}
+@keyframes pulse{50%{filter:brightness(1.3)}}
 #win h2{margin:0 0 6px;font-size:28px}
 #win button{margin-top:14px;border:0;background:var(--hi);border-radius:10px;padding:12px 20px;font-size:16px;font-weight:600}
 </style>
@@ -86,13 +90,15 @@ svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-l
 <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/></symbol>
 <symbol id="i-vol" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></symbol>
 <symbol id="i-mute" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="m22 9-6 6m0-6 6 6"/></symbol>
+<symbol id="i-bulb" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6M10 22h4"/></symbol>
 </defs></svg>
 
 <main id="start" class="screen on">
  <div class="fan"><i>A♠</i><i class="r">K♥</i><i class="r">Q♦</i></div>
  <h1>Uday’s Solitaire</h1>
  <p class="tag">Classic solitaire. Nothing else.</p>
- <div class="seg" id="seg"><button data-d="1" class="on">Draw 1</button><button data-d="3">Draw 3</button></div>
+ <div class="seg" id="seg"><button data-l="easy" class="on">Easy</button><button data-l="medium">Medium</button><button data-l="hard">Hard</button></div>
+ <p class="note" id="lvd" style="margin:-6px 0 18px;max-width:280px;min-height:36px">One card at a time. Every deal can be won.</p>
  <button class="big" id="bResume" style="display:none">Continue game</button>
  <button class="big" id="bStart">Start game</button>
  <p class="note">No ads. No sign-up. No tracking.</p>
@@ -109,11 +115,13 @@ svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-l
  <nav>
   <button id="bNew"><svg><use href="#i-plus"/></svg>New</button>
   <button id="bRe"><svg><use href="#i-re"/></svg>Restart</button>
-  <button id="bDr"><svg><use href="#i-lay"/></svg><span id="dl">Draw 1</span></button>
+  <button id="bDr"><svg><use href="#i-lay"/></svg><span id="dl">Easy</span></button>
+  <button id="bHint"><svg><use href="#i-bulb"/></svg>Hint</button>
   <button id="bU5"><svg><use href="#i-rew"/></svg>Undo 5</button>
   <button id="bU1"><svg><use href="#i-undo"/></svg>Undo</button>
  </nav>
 </main>
+<div id="toast"></div>
 <div id="how"><div><h2>Add to Home Screen</h2>
 <ol><li>Open this page in <b>Safari</b>.</li><li>Tap the <b>Share</b> button (square with an arrow).</li><li>Scroll down and tap <b>Add to Home Screen</b>.</li><li>Tap <b>Add</b>.</li></ol>
 <p>Then open it from the icon on your home screen. Your game is saved automatically.</p><button id="bHowOk">Got it</button></div></div>
@@ -121,7 +129,10 @@ svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-l
 
 <script>
 const S=['♠','♥','♦','♣'],R=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
-let g=null,hist=[],initial='',sel=null,moves=0,draw=1;
+let g=null,hist=[],initial='',sel=null,moves=0,draw=1,level='easy',pick='easy',sim=false;
+const LEVELS=['easy','medium','hard'],LV={easy:'Easy',medium:'Medium',hard:'Hard'};
+const DESC={easy:'One card at a time. Every deal can be won.',medium:'One card at a time. Random deals.',hard:'Three cards at a time. Random deals.'};
+function setLevel(l){pick=l;document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.l==l));$('lvd').textContent=DESC[l]}
 const red=c=>c.s==1||c.s==2,last=a=>a[a.length-1],$=id=>document.getElementById(id);
 
 function show(id){$('start').classList.toggle('on',id=='start');$('game').classList.toggle('on',id=='game');
@@ -131,13 +142,36 @@ function show(id){$('start').classList.toggle('on',id=='start');$('game').classL
   $('bStart').textContent=has?'New game':'Start game';
   window.scrollTo(0,0)}
 const won=()=>g&&g.found.every(f=>f.length==13);
-function deal(){
+function newState(){
   const deck=[];
   for(let s=0;s<4;s++)for(let r=0;r<13;r++)deck.push({s,r,u:false});
   for(let i=deck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]]}
   const tab=[];
   for(let i=0;i<7;i++){const p=deck.splice(0,i+1);last(p).u=true;tab.push(p)}
-  g={stock:deck,waste:[],found:[[],[],[],[]],tab};
+  return{stock:deck,waste:[],found:[[],[],[],[]],tab};
+}
+// plays the deal silently using the hint logic; true if it ends in a win
+function winnable(st){
+  const sg=g,sh=hist,sm=moves,sd=draw,ss=sel;
+  sim=true;g=JSON.parse(JSON.stringify(st));hist=[];moves=0;draw=1;
+  let ok=false;const seen=new Set();
+  try{
+    for(let n=0;n<4000;n++){
+      if(won()){ok=true;break}
+      const k=JSON.stringify(g);if(seen.has(k))break;seen.add(k);
+      const h=hintInfo();
+      if(h.type=='none')break;
+      if(h.type=='draw')drawStock();else tryMove(h.m.s,h.m.d.t,h.m.d.i);
+    }
+  }catch(e){}
+  sim=false;g=sg;hist=sh;moves=sm;draw=sd;sel=ss;
+  return ok;
+}
+function deal(){
+  level=pick;draw=level=='hard'?3:1;
+  let st=newState();
+  if(level=='easy')for(let n=0;n<80&&!winnable(st);n++)st=newState();
+  g=st;
   initial=JSON.stringify(g);hist=[];sel=null;moves=0;render();
 }
 const snap=()=>{hist.push(JSON.stringify(g));moves++};
@@ -178,7 +212,7 @@ function drawStock(){
   snap();sel=null;tick();
   if(!g.stock.length){g.stock=g.waste.reverse().map(c=>({...c,u:false}));g.waste=[]}
   else for(let n=0;n<draw&&g.stock.length;n++){const c=g.stock.pop();c.u=true;g.waste.push(c)}
-  render();
+  if(!sim)render();
 }
 function autoMove(s){
   const cs=cardsOf(s);if(!cs.length)return false;
@@ -243,8 +277,9 @@ function render(){
   }
   $('bU1').disabled=$('bU5').disabled=$('bRe').disabled=!hist.length;
   $('info').textContent=`${moves} move${moves==1?'':'s'}`;
-  $('dl').textContent='Draw '+draw;
+  $('dl').textContent=LV[level];
   save();
+  setTimeout(stuckCheck,350);
   if(won()){$('wm').textContent=`Finished in ${moves} moves.`;$('win').style.display='flex'}
 }
 $('board').addEventListener('click',e=>{
@@ -286,11 +321,80 @@ function endDrag(e){
 }
 window.addEventListener('pointerup',endDrag);
 window.addEventListener('pointercancel',endDrag);
+/* hints */
+function moveCands(){
+  const srcs=[],out=[];
+  if(g.waste.length)srcs.push({t:'waste',i:0,k:0});
+  g.tab.forEach((p,i)=>p.forEach((c,k)=>{if(c.u)srcs.push({t:'tab',i,k})}));
+  for(const s of srcs){
+    const cs=cardsOf(s),c=cs[0];
+    const reveals=s.t=='tab'&&s.k>0&&!g.tab[s.i][s.k-1].u;
+    if(cs.length==1){const f=foundFor(c);if(f>=0)out.push({s,d:{t:'found',i:f},score:s.t=='waste'?9:(reveals?10:8)})}
+    g.tab.forEach((p,j)=>{
+      if(s.t=='tab'&&s.i==j)return;
+      if(!canTab(c,p))return;
+      if(!p.length&&s.t=='tab'&&s.k==0)return;
+      let sc=0;
+      if(reveals)sc=7;
+      else if(s.t=='waste')sc=5;
+      else if(s.t=='tab'&&s.k>0){if(foundFor(g.tab[s.i][s.k-1])>=0)sc=3}
+      else if(s.t=='tab'&&s.k==0)sc=1;
+      if(sc>0)out.push({s,d:{t:'tab',i:j},score:sc-(p.length?0:.5)});
+    });
+  }
+  return out.sort((a,b)=>b.score-a.score);
+}
+function drawHelps(){
+  let st=[...g.stock],w=[...g.waste];
+  if(!st.length&&!w.length)return false;
+  for(let n=0;n<120;n++){
+    if(!st.length){if(!w.length)return false;st=w.slice().reverse();w=[]}
+    else for(let m=0;m<draw&&st.length;m++)w.push(st.pop());
+    const c=w[w.length-1];
+    if(c&&(foundFor(c)>=0||g.tab.some(p=>canTab(c,p))))return true;
+  }
+  return false;
+}
+function hintInfo(){
+  const m=moveCands();
+  if(m.length)return{type:'move',m:m[0]};
+  return{type:drawHelps()?'draw':'none'};
+}
+let toastT=null;
+function toast(msg,ms){
+  const el=$('toast');el.textContent=msg;el.style.display='block';
+  clearTimeout(toastT);toastT=setTimeout(()=>{el.style.display='none'},ms||2500);
+}
+function clearHint(){document.querySelectorAll('.hint,.hintp').forEach(e=>e.classList.remove('hint','hintp'))}
+function showHint(){
+  clearHint();
+  const h=hintInfo();
+  if(h.type=='none'){toast('No more moves. Try Undo, or start a new game.',4000);return}
+  if(h.type=='draw'){
+    const e=document.querySelector('#top .pile[data-t="stock"]');if(e)e.classList.add('hintp');
+    toast('No move on the table. Draw a card.');setTimeout(clearHint,3500);return;
+  }
+  const {s,d}=h.m;
+  const els=s.t=='waste'?[...document.querySelectorAll('.card[data-t="waste"]')]
+    :[...document.querySelectorAll('#tabs .card[data-t="tab"][data-i="'+s.i+'"]')].filter(c=>+c.dataset.k>=s.k);
+  els.forEach(e=>e.classList.add('hint'));
+  const dp=d.t=='tab'?document.querySelector('#tabs .pile[data-t="tab"][data-i="'+d.i+'"]')
+    :document.querySelector('#top .pile[data-t="found"][data-i="'+d.i+'"]');
+  if(dp)dp.classList.add('hintp');
+  toast(d.t=='found'?'Move this card up to the top':'Move this card to the highlighted column');
+  setTimeout(clearHint,3500);
+}
+function stuckCheck(){
+  if(!g||won()||!hist.length||!$('game').classList.contains('on'))return;
+  if(hintInfo().type=='none')toast('No more moves. Try Undo, or start a new game.',4000);
+}
+$('bHint').onclick=showHint;
+
 /* sound */
 let ac=null,snd=true;
 const AC=window.AudioContext||window.webkitAudioContext;
 function tick(){
-  if(!snd||!AC)return;
+  if(sim||!snd||!AC)return;
   try{
     ac=ac||new AC();if(ac.state=='suspended')ac.resume();
     const n=Math.floor(ac.sampleRate*.035),buf=ac.createBuffer(1,n,ac.sampleRate),d=buf.getChannelData(0);
@@ -311,7 +415,7 @@ function save(){
   try{
     if(!g)return;
     if(won()){localStorage.removeItem(KEY);return}
-    localStorage.setItem(KEY,JSON.stringify({g,hist:hist.slice(-300),initial,moves,draw}));
+    localStorage.setItem(KEY,JSON.stringify({g,hist:hist.slice(-300),initial,moves,draw,level}));
   }catch(_){}
 }
 function load(){
@@ -319,7 +423,7 @@ function load(){
     const d=JSON.parse(localStorage.getItem(KEY)||'null');
     if(d&&d.g&&d.g.tab&&d.moves>0){
       g=d.g;hist=d.hist||[];initial=d.initial;moves=d.moves;draw=d.draw||1;sel=null;
-      document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on',+b.dataset.d==draw));
+      level=d.level||(draw==3?'hard':'medium');setLevel(level);
       render();
     }
   }catch(_){}
@@ -337,10 +441,8 @@ $('bNew').onclick=()=>{if(moves==0||confirm('Start a new game? Your current game
 $('bU1').onclick=()=>undo(1);
 $('bU5').onclick=()=>undo(5);
 $('bRe').onclick=()=>{if(confirm('Restart this deal from the beginning?'))restart()};
-$('bDr').onclick=()=>{if(moves==0||confirm('Changing draw mode starts a new game. Continue?')){draw=draw==1?3:1;
-  document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on',+b.dataset.d==draw));deal()}};
-$('seg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
-  draw=+b.dataset.d;document.querySelectorAll('#seg button').forEach(x=>x.classList.toggle('on',x==b))});
+$('bDr').onclick=()=>{if(moves==0||confirm('Switch level? This starts a new game.')){pick=LEVELS[(LEVELS.indexOf(level)+1)%3];setLevel(pick);deal()}};
+$('seg').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setLevel(b.dataset.l)});
 $('bAgain').onclick=()=>{$('win').style.display='none';begin()};
 /* install to home screen */
 let dip=null;
