@@ -52,9 +52,10 @@ h1{margin:0;font-size:42px;line-height:1.1;letter-spacing:.01em}
 #board{padding:6px 2px}
 .row{display:grid;grid-template-columns:repeat(7,var(--w));gap:calc(var(--w)*.04);justify-content:center;margin-bottom:calc(var(--w)*.3)}
 .pile{position:relative;height:calc(var(--w)*1.4);border-radius:6px;background:var(--slot)}
-.card{position:absolute;left:0;width:var(--w);height:calc(var(--w)*1.4);border-radius:6px;background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.45);font-size:calc(var(--w)*.44);font-weight:700;padding:calc(var(--w)*.03) calc(var(--w)*.04);letter-spacing:-.04em;line-height:1}
+.card{position:absolute;left:0;width:var(--w);height:calc(var(--w)*1.4);border-radius:6px;background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.45);display:flex;justify-content:space-between;align-items:flex-start;font-size:calc(var(--w)*.5);font-weight:800;padding:calc(var(--w)*.03) calc(var(--w)*.05);letter-spacing:-.06em;line-height:1}
+.card .st{font-size:.8em;letter-spacing:0}
 .card.r{color:var(--red)}
-.card .c{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:calc(var(--w)*.55);opacity:.9}
+.card .c{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:calc(var(--w)*.5);opacity:.9;padding-top:calc(var(--w)*.28)}
 .card.d{background:var(--back);background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.14) 0 3px,transparent 3px 8px);border:3px solid var(--card)}
 .card.sel{outline:3px solid var(--hi);outline-offset:-1px;z-index:50}
 .empty{display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.35);font-size:calc(var(--w)*.4)}
@@ -178,22 +179,34 @@ function drawStock(){
   else for(let n=0;n<draw&&g.stock.length;n++){const c=g.stock.pop();c.u=true;g.waste.push(c)}
   render();
 }
+function autoMove(s){
+  const cs=cardsOf(s);if(!cs.length)return false;
+  if(cs.length==1&&tryMove(s,'found',0))return true;
+  const order=[...g.tab.keys()].sort((a,b)=>(g.tab[b].length>0)-(g.tab[a].length>0));
+  for(const j of order){
+    if(s.t=='tab'&&s.i==j)continue;
+    if(!canTab(cs[0],g.tab[j]))continue;
+    if(!g.tab[j].length&&s.t=='tab'&&s.k==0)continue; // pointless king shuffle
+    return tryMove(s,'tab',j);
+  }
+  return false;
+}
 function click(t,i,k){
   if(t=='stock'){drawStock();return}
-  if(sel){
-    if(sel.t==t&&sel.i==i&&(t!='tab'||sel.k==k)){
-      if(cardsOf(sel).length==1&&tryMove(sel,'found',0)){sel=null;render();return}
-      sel=null;render();return;
-    }
-    if((t=='tab'||t=='found')&&tryMove(sel,t,i)){sel=null;render();return}
+  if(t=='found')return;
+  const ok=t=='waste'?g.waste.length:(g.tab[i][k]&&g.tab[i][k].u);
+  if(!ok)return;
+  const moved=autoMove({t,i,k:t=='tab'?k:0});
+  sel=null;render();
+  if(!moved){
+    const el=document.querySelector(t=='tab'?`.card[data-t="tab"][data-i="${i}"][data-k="${k}"]`:'.card[data-t="waste"]');
+    if(el&&el.animate)el.animate([{transform:'translateX(0)'},{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(0)'}],{duration:200});
   }
-  const ok=t=='waste'?g.waste.length:t=='found'?g.found[i].length:(g.tab[i][k]&&g.tab[i][k].u);
-  sel=ok?{t,i,k}:null;render();
 }
 
 function cardHTML(c,top,attr,isSel){
   if(!c.u)return `<div class="card d" style="top:${top}" data-id="${c.s*13+c.r}" ${attr}></div>`;
-  return `<div class="card ${red(c)?'r':''} ${isSel?'sel':''}" style="top:${top}" data-id="${c.s*13+c.r}" ${attr}>${R[c.r]}${S[c.s]}<span class="c">${S[c.s]}</span></div>`;
+  return `<div class="card ${red(c)?'r':''} ${isSel?'sel':''}" style="top:${top}" data-id="${c.s*13+c.r}" ${attr}><span>${R[c.r]}</span><span class="st">${S[c.s]}</span><span class="c">${S[c.s]}</span></div>`;
 }
 function render(){
   const oldPos={};
@@ -212,7 +225,7 @@ function render(){
     p.forEach((c,k)=>{
       const isSel=sel&&sel.t=='tab'&&sel.i==i&&k>=sel.k;
       cards+=cardHTML(c,`calc(var(--w)*${y.toFixed(2)})`,`data-t="tab" data-i="${i}" data-k="${k}"`,isSel);
-      lastStep=c.u?.48:.2;y+=lastStep;
+      lastStep=c.u?.5:.2;y+=lastStep;
     });
     h+=`<div class="pile" data-t="tab" data-i="${i}" style="height:calc(var(--w)*${(1.4+y-lastStep).toFixed(2)})">${cards}</div>`;
   });
